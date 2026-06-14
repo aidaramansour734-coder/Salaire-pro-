@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salaire Pro</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef7f4;margin:0}
+header{background:#0f9d58;color:#fff;padding:20px;text-align:center}
+.card{background:#fff;margin:15px;border-radius:12px;padding:15px;box-shadow:0 2px 8px #0002}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,button,select{padding:10px;width:100%;margin-top:6px}
+button{background:#0f9d58;color:white;border:none;border-radius:8px}
+.stat{font-size:28px;font-weight:bold}
+.small{color:#666;font-size:12px}
+table{width:100%;border-collapse:collapse}
+td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}
+</style>
+</head>
+<body>
+<header><h2>💶 Salaire Pro</h2><div id="month"></div></header>
+
+<div class="card">
+<div class="grid">
+<div><label>Taux €/h</label><input id="rate" type="number" value="15"></div>
+<div><label>Prime (€)</label><input id="bonus" type="number" value="0"></div>
+</div>
+<label>Date</label><input id="date" type="date">
+<label>Heures</label><input id="hours" type="number" step="0.5">
+<button onclick="add()">Ajouter</button>
+</div>
+
+<div class="card grid">
+<div><div class="small">Heures</div><div class="stat" id="th">0</div></div>
+<div><div class="small">Salaire</div><div class="stat" id="ts">0 €</div></div>
+</div>
+
+<div class="card">
+<button onclick="exp()">Exporter JSON</button>
+</div>
+
+<div class="card">
+<table><thead><tr><th>Date</th><th>Heures</th><th>Gain</th><th></th></tr></thead>
+<tbody id="tb"></tbody></table>
+</div>
+
+<script>
+let data=JSON.parse(localStorage.getItem("salpro")||"[]");
+month.textContent=new Date().toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+date.value=new Date().toISOString().slice(0,10);
+
+function save(){localStorage.setItem("salpro",JSON.stringify(data));draw();}
+function add(){
+ let h=parseFloat(hours.value||0); if(h<=0)return;
+ let e=data.find(x=>x.d===date.value);
+ if(e)e.h=h; else data.push({d:date.value,h:h});
+ hours.value="";save();
+}
+function draw(){
+ let r=parseFloat(rate.value||0),b=parseFloat(bonus.value||0);
+ let tot=data.reduce((a,x)=>a+x.h,0),sal=tot*r+b;
+ th.textContent=tot.toFixed(1)+" h";ts.textContent=sal.toFixed(2)+" €";
+ tb.innerHTML=data.sort((a,b)=>b.d.localeCompare(a.d)).map(x=>
+ `<tr><td>${x.d}</td><td>${x.h}</td><td>${(x.h*r).toFixed(2)} €</td><td><button onclick="del('${x.d}')">🗑</button></td></tr>`).join("");
+}
+function del(d){data=data.filter(x=>x.d!==d);save();}
+function exp(){
+ let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="salaire.json";a.click();
+}
+rate.oninput=draw;bonus.oninput=draw;draw();
+</script>
+</body></html>
